@@ -24,27 +24,83 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 
 namespace org.bn.coders
 {
     public class CoderUtils
     {
+        static Dictionary<MemberInfo, Dictionary<Type, Attribute>> _attrsCache = new Dictionary<MemberInfo, Dictionary<Type, Attribute>>();
+        static ReaderWriterLockSlim _lock = new ReaderWriterLockSlim();
+
         public static T getAttribute<T>(MemberInfo field) where T : Attribute
         {
-            var atr = Attribute.GetCustomAttribute(field, typeof(T), inherit: false);
-            if (atr != null)
+            var attrType = typeof(T);
+            var local = new Dictionary<Type, Attribute>();
+
+            _lock.EnterReadLock();
+            try
             {
-                return (T)atr;
+                if (_attrsCache.ContainsKey(field))
+                {
+                    local = _attrsCache[field];
+                    if (local.ContainsKey(attrType)) return (T)local[typeof(T)];
+                }
             }
-            else
+            finally
             {
-                return default;
+                _lock.ExitReadLock();
             }
+
+            var attr = field.CustomAttributes.Where(a => a.AttributeType == attrType).FirstOrDefault();
+
+            _lock.EnterWriteLock();
+            try
+            {
+                if (_attrsCache.ContainsKey(field))
+                {
+                    local = _attrsCache[field];
+                    if (local.ContainsKey(attrType)) return (T)local[typeof(T)];
+                }
+                else
+                {
+                    local = new Dictionary<Type, Attribute>();
+                    _attrsCache.Add(field, local);
+                }
+
+                if (attr == null)
+                {
+                    local.Add(attrType, default);
+                    return default;
+                }
+                else
+                {
+                    var res = CreateAttribute<T>(attr);
+                    local.Add(attrType, res);
+                    return res;
+                }
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+
+
         }
 
         public static bool isAttributePresent<T>(MemberInfo field) where T : Attribute
         {
-            return field.CustomAttributes.Where(a => (a.AttributeType == typeof(T))).Count() > 0;
+            return getAttribute<T>(field) != null;
+        }
+
+        private static T CreateAttribute<T>(CustomAttributeData attr) where T : Attribute
+        {
+            var res = (T)attr.Constructor.Invoke(new object[0]);
+            foreach (var a in attr.NamedArguments)
+            {
+                ((PropertyInfo)a.MemberInfo).SetValue(res, a.TypedValue.Value);
+            }
+            return res;
         }
 
         public static int getIntegerLength(int val)
