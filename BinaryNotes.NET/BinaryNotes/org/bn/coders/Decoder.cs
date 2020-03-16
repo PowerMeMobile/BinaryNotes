@@ -360,7 +360,7 @@ namespace org.bn.coders
 		}
 
         public virtual DecodedObject<object> decodeEnum(DecodedObject<object> decodedTag, System.Type objectClass, ElementInfo elementInfo, System.IO.Stream stream)
-		{
+        {
             Type enumClass = null;
             foreach (MemberInfo member in objectClass.GetMembers())
             {
@@ -375,36 +375,31 @@ namespace org.bn.coders
                 }
             };
 
-			System.Reflection.PropertyInfo field = objectClass.GetProperty("Value");
+            var field = objectClass.GetProperty("Value");
 
+            var itemValue = decodeEnumItem(decodedTag, field.PropertyType, enumClass, elementInfo, stream);
 
-			DecodedObject<object> itemValue = decodeEnumItem(decodedTag, field.PropertyType, enumClass, elementInfo, stream);
-			
             System.Reflection.FieldInfo param = null;
-			if (itemValue != null)
-			{
-			object result = createInstanceForElement(objectClass, elementInfo);
+            if (itemValue != null)
+            {
+                object result = createInstanceForElement(objectClass, elementInfo);
 
-		        foreach(FieldInfo enumItem in enumClass.GetFields())
-		        {
-                    if (CoderUtils.isAttributePresent<ASN1EnumItem>(enumItem))
-			        {
-					    ASN1EnumItem meta =
-                            CoderUtils.getAttribute<ASN1EnumItem>(enumItem);
-					    if (meta.Tag.Equals(itemValue.Value))
-					    {
-						    param = enumItem;
-						    break;
-					    }
-			        }
-		        }
-				invokeSetterMethodForField(field, result, param.GetValue(null) , null);
-				return new DecodedObject<object>(result, itemValue.Size);
-			}
-			else
-				return null;
-			
-		}
+                foreach (FieldInfo enumItem in enumClass.GetFields())
+                {
+                    ASN1EnumItem meta = CoderUtils.getAttribute<ASN1EnumItem>(enumItem);
+                    if (meta != null && meta.Tag.Equals(itemValue.Value))
+                    {
+                        param = enumItem;
+                        break;
+                    }
+                }
+                invokeSetterMethodForField(field, result, param.GetValue(null), null);
+                return new DecodedObject<object>(result, itemValue.Size);
+            }
+            else
+                return null;
+
+        }
 
         public abstract DecodedObject<object> decodeEnumItem(DecodedObject<object> decodedTag, System.Type objectClass, System.Type enumClass, ElementInfo elementInfo, System.IO.Stream stream);
 
