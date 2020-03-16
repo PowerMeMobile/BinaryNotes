@@ -53,7 +53,7 @@ namespace org.bn.metadata
             get { return stringType; }
         }
 
-        public override void setParentAnnotated(ICustomAttributeProvider parent) {
+        public override void setParentAnnotated(MemberInfo parent) {
             if(parent!=null) {
                 if(CoderUtils.isAttributePresent<ASN1String>(parent)) {
                     ASN1String value = CoderUtils.getAttribute<ASN1String>(parent);

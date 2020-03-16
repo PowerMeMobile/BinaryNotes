@@ -24,9 +24,9 @@ namespace org.bn.coders
 	public class ElementInfo
 	{
         private ASN1Element element;
-        private ICustomAttributeProvider parentAnnotatedClass;
+        private MemberInfo parentAnnotatedClass;
 
-        public ICustomAttributeProvider ParentAnnotatedClass
+        public MemberInfo ParentAnnotatedClass
         {
             get { return parentAnnotatedClass; }
             set { parentAnnotatedClass = value; }
@@ -37,9 +37,9 @@ namespace org.bn.coders
             get { return element; }
             set { element = value; }
         }
-        private ICustomAttributeProvider annotatedClass;
+        private MemberInfo annotatedClass;
 
-        public ICustomAttributeProvider AnnotatedClass
+        public MemberInfo AnnotatedClass
         {
             get { return annotatedClass; }
             set { annotatedClass = value; }
@@ -101,22 +101,22 @@ namespace org.bn.coders
         {
         }
 
-        public bool isAttributePresent<T>() 
+        public bool isAttributePresent<T>() where T:Attribute
         {
             return CoderUtils.isAttributePresent<T>(annotatedClass);
         }
 
-        public T getAttribute<T>()
+        public T getAttribute<T>() where T : Attribute
         {
             return CoderUtils.getAttribute<T>(annotatedClass);
         }
 
-        public bool isParentAttributePresent<T>()
+        public bool isParentAttributePresent<T>() where T : Attribute
         {
             return CoderUtils.isAttributePresent<T>(parentAnnotatedClass);
         }
 
-        public T getParentAttribute<T>()
+        public T getParentAttribute<T>() where T : Attribute
         {
             return CoderUtils.getAttribute<T>(parentAnnotatedClass);
         }

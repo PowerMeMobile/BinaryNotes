@@ -41,7 +41,7 @@ namespace org.bn.metadata
             get { return name; }
         }
 
-        public virtual void setParentAnnotated(ICustomAttributeProvider parentAnnotated) {}    
+        public virtual void setParentAnnotated(MemberInfo parentAnnotated) {}    
 
         public abstract int encode(IASN1TypesEncoder encoder, object obj, Stream stream, ElementInfo elementInfo);
         public abstract DecodedObject<object> decode(IASN1TypesDecoder decoder, DecodedObject<object> decodedTag, Type objectClass, ElementInfo elementInfo, Stream stream);

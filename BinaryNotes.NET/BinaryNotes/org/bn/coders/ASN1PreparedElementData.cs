@@ -117,7 +117,7 @@ namespace org.bn.coders
             setupAccessors(parentClass, field);
         }
 
-        private void setupMetadata(ICustomAttributeProvider annotated, Type objectClass) {
+        private void setupMetadata(MemberInfo annotated, Type objectClass) {
             if( CoderUtils.isAttributePresent<ASN1SequenceOf>(annotated) ) {
                 typeMeta = new ASN1SequenceOfMetadata( CoderUtils.getAttribute<ASN1SequenceOf> (annotated),
                     objectClass,
@@ -281,7 +281,7 @@ namespace org.bn.coders
         }
 
 
-        private void setupConstraint(ICustomAttributeProvider annotated)
+        private void setupConstraint(MemberInfo annotated)
         {
             if( CoderUtils.isAttributePresent<ASN1SizeConstraint>(annotated) ) {
                 constraint = new ASN1SizeConstraintMetadata( CoderUtils.getAttribute<ASN1SizeConstraint> (annotated) ) ;

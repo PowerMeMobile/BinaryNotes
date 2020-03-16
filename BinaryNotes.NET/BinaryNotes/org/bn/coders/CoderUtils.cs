@@ -20,6 +20,7 @@ using org.bn.attributes.constraints;
 using org.bn.metadata;
 using org.bn.types;
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -28,24 +29,22 @@ namespace org.bn.coders
 {
     public class CoderUtils
     {
-        public static T getAttribute<T>(ICustomAttributeProvider field)
+        public static T getAttribute<T>(MemberInfo field) where T : Attribute
         {
-            object[] attrs = field.GetCustomAttributes(typeof(T), false);
-            if (attrs != null && attrs.Length > 0)
+            var atr = Attribute.GetCustomAttribute(field, typeof(T), inherit: false);
+            if (atr != null)
             {
-                T attribute = (T)attrs[0];
-                return attribute;
+                return (T)atr;
             }
             else
             {
-                return default(T);
+                return default;
             }
         }
 
-        public static bool isAttributePresent<T>(ICustomAttributeProvider field)
+        public static bool isAttributePresent<T>(MemberInfo field) where T : Attribute
         {
-            object[] attrs = field.GetCustomAttributes(typeof(T), false);
-            return attrs != null && attrs.Length > 0;
+            return field.CustomAttributes.Where(a => (a.AttributeType == typeof(T))).Count() > 0;
         }
 
         public static int getIntegerLength(int val)
@@ -275,7 +274,7 @@ namespace org.bn.coders
             }
         }
 
-        public static bool isImplements(ICustomAttributeProvider objectClass, Type interfaceClass)
+        public static bool isImplements(MemberInfo objectClass, Type interfaceClass)
         {
             return isAttributePresent<ASN1PreparedElement>(objectClass);// isAnnotationPresent(ASN1PreparedElement.class);
             /*for(Class item: objectClass.getInterfaces()) {
@@ -286,7 +285,7 @@ namespace org.bn.coders
             return false;*/
         }
 
-        public static bool isAnyField(ICustomAttributeProvider field, ElementInfo elementInfo)
+        public static bool isAnyField(MemberInfo field, ElementInfo elementInfo)
         {
             bool isAny = false;
             if (elementInfo.hasPreparedInfo())
@@ -300,7 +299,7 @@ namespace org.bn.coders
             return isAny;
         }
 
-        public static bool isNullField(ICustomAttributeProvider field, ElementInfo elementInfo)
+        public static bool isNullField(MemberInfo field, ElementInfo elementInfo)
         {
             bool isNull = false;
             if (elementInfo.hasPreparedInfo())
@@ -314,7 +313,7 @@ namespace org.bn.coders
             return isNull;
         }
 
-        public static bool isOptionalField(ICustomAttributeProvider field, ElementInfo elementInfo)
+        public static bool isOptionalField(MemberInfo field, ElementInfo elementInfo)
         {
             if (elementInfo.hasPreparedInfo())
             {
@@ -331,7 +330,7 @@ namespace org.bn.coders
             }
         }
 
-        public static bool isDefaultField(ICustomAttributeProvider field, ElementInfo elementInfo)
+        public static bool isDefaultField(MemberInfo field, ElementInfo elementInfo)
         {
             if (elementInfo.hasPreparedInfo())
             {

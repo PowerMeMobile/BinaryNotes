@@ -30,7 +30,7 @@ namespace org.bn.metadata
         private Type itemClass;
         private ASN1PreparedElementData itemClassMetadata;
 
-        public ASN1SequenceOfMetadata(String name, bool isSetOf, Type itemClass, ICustomAttributeProvider seqFieldAnnotatedElem)
+        public ASN1SequenceOfMetadata(String name, bool isSetOf, Type itemClass, MemberInfo seqFieldAnnotatedElem)
             : base(name)
         {
             this.isSetOf = isSetOf;
@@ -41,7 +41,7 @@ namespace org.bn.metadata
                 this.itemClassMetadata.TypeMetadata.setParentAnnotated(seqFieldAnnotatedElem);
         }
 
-        public ASN1SequenceOfMetadata(ASN1SequenceOf annotation, Type itemClass, ICustomAttributeProvider seqFieldAnnotatedElem)
+        public ASN1SequenceOfMetadata(ASN1SequenceOf annotation, Type itemClass, MemberInfo seqFieldAnnotatedElem)
             : this(annotation.Name, annotation.IsSetOf, itemClass, seqFieldAnnotatedElem)
         {
         }               
