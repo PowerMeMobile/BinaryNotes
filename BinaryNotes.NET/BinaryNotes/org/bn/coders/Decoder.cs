@@ -15,7 +15,10 @@
  limitations under the License.
  */
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 using System.IO;
 using org.bn.attributes;
 using org.bn.metadata;
@@ -359,38 +362,70 @@ namespace org.bn.coders
 				return new DecodedObject<object>(choice, val != null?val.Size:0);
 		}
 
+        private class EnumCache
+        {
+            public Type EnumClass;
+            public PropertyInfo ValueProperty;
+            public Dictionary<object, FieldInfo> EnumValues = new Dictionary<object, FieldInfo>();
+        }
+
+        private Dictionary<Type, EnumCache> _enums = new Dictionary<Type, EnumCache>();
+
         public virtual DecodedObject<object> decodeEnum(DecodedObject<object> decodedTag, System.Type objectClass, ElementInfo elementInfo, System.IO.Stream stream)
         {
-            Type enumClass = null;
-            foreach (MemberInfo member in objectClass.GetMembers())
-            {
-                if (member is System.Type)
-                {
-                    Type cls = (Type)member;
-                    if (cls.IsEnum)
-                    {
-                        enumClass = cls;
-                        break;
-                    }
-                }
-            };
+            EnumCache enumClassInfo = null;
 
-            var field = objectClass.GetProperty("Value");
+            if (_enums.ContainsKey(objectClass)) enumClassInfo = _enums[objectClass];
+            else
+            {
+                var enumMembers = objectClass.GetMembers();
+                foreach (MemberInfo member in enumMembers)
+                {
+                    if (member is System.Type)
+                    {
+                        Type cls = (Type)member;
+                        if (cls.IsEnum)
+                        {
+                            enumClassInfo = new EnumCache()
+                            {
+                                EnumClass = cls,
+                                ValueProperty = objectClass.GetProperty("Value")
+                            };
+                            break;
+                        }
+                    }
+                };
+
+                _enums.Add(objectClass, enumClassInfo);
+            }
+
+            var field = enumClassInfo.ValueProperty;
+            Type enumClass = enumClassInfo.EnumClass;
 
             var itemValue = decodeEnumItem(decodedTag, field.PropertyType, enumClass, elementInfo, stream);
 
-            System.Reflection.FieldInfo param = null;
+            FieldInfo param = null;
             if (itemValue != null)
             {
                 object result = createInstanceForElement(objectClass, elementInfo);
 
-                foreach (FieldInfo enumItem in enumClass.GetFields())
+                if (enumClassInfo.EnumValues.ContainsKey(itemValue.Value))
                 {
-                    ASN1EnumItem meta = CoderUtils.getAttribute<ASN1EnumItem>(enumItem);
-                    if (meta != null && meta.Tag.Equals(itemValue.Value))
+                    param = enumClassInfo.EnumValues[itemValue.Value];
+                }
+                else
+                {
+                    var f = enumClass.GetFields();
+
+                    foreach (FieldInfo enumItem in f)
                     {
-                        param = enumItem;
-                        break;
+                        ASN1EnumItem meta = CoderUtils.getAttribute<ASN1EnumItem>(enumItem);
+                        if (meta != null && meta.Tag.Equals(itemValue.Value))
+                        {
+                            param = enumItem;
+                            enumClassInfo.EnumValues[itemValue.Value] = param;
+                            break;
+                        }
                     }
                 }
                 invokeSetterMethodForField(field, result, param.GetValue(null), null);
